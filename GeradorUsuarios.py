@@ -61,7 +61,7 @@ def gerar_data_aleatoria():
     primeiro_dia = hoje.replace(day=1)
     delta = (hoje - primeiro_dia).days + 1
     dias_aleatorios = rd.randint(0, delta - 1)
-    return primeiro_dia + timedelta(days=dias_aleatorios
+    return primeiro_dia + timedelta(days=dias_aleatorios)
 
 def Funcionario():
     primeiro_nome = rd.choice(Lista_Primeiro_nome)
