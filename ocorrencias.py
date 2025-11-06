@@ -13,53 +13,53 @@ class Ocorrencias():
         self.funcionario = {}
         
 
-    #função responsável por achar um funcionário já cadastrado e retornar o seu cargo.
+    #função responsável por achar um funcionárieo já cadastrado e retornar o seu cargo.
     def acharFuncionario(self, nome):
+        #condicional que checa se o arquivo existe
         if not os.path.exists(self.pathArquivo):
             st.warning("Arquivo de funcionários não encontrado.")
+        
+        #guarda o arquivo na variavel
         df = pd.read_excel(self.pathArquivo)
         encontrado = df[df["nome"] == nome]
+
+        #caso o arquivo exista:
         if not encontrado.empty:
             funcionario = encontrado.iloc[0]  
-            st.success("Funcionário encontrado:")
-            st.write(f"Nome: {funcionario['nome']}")
-            st.write(f"Cargo: {funcionario['cargo']}")
+            st.success("Funcionário encontrado!")
+            st.success(f"Nome: {funcionario['nome']} \nCargo: {funcionario['cargo']}")
             self.funcionario = {
                 "nome": funcionario["nome"],
                 "cargo": funcionario["cargo"]
             } 
+            return True
         else:
-            st.write("Funcionário inexistente, cadastre-o primeiro.")
+            st.warning("Funcionário inexistente, cadastre-o primeiro.")
+            return False
 
+    #cadastra as ocorrências
     def calculosOcorrencia(self):
-        nome = st.text_input("Qual o nome do funcionário?", key="nome")
+        name = st.text_input("Qual o nome do funcionário?", key="nome")
         button = st.button("Buscar")
-        self.acharFuncionario(nome)
-
-        with st.form("form_ocorrencias", clear_on_submit=True):
-            
-            if  nome != False:
-                dias = st.text_input("Quantos dias afastados? ", key="dias")
-                if dias != 0:
-                    lesão = "Sim"
-                    tipo = "Acidente"
-                else:
-                    lesão = input("Houve lesão?").lower()
-                    if lesão == "sim":  tipo = "Incidente"
-                    else: tipo = "Quase Acidente"
-            enviar = st.form_submit_button("Cadastrar Ocorrência")
-
-        if enviar:
-            data = str(input("Digite a data da ocorrencia: "))
-
-            self.funcionario.update({
-                "Dias afastados:":dias,
-                "Lesão: ":lesão,
-                "Tipo: ": tipo,
-                "Data: ": data,
-            })
-        
-
+        if button:
+            registeredEmpl = self.acharFuncionario(name)
+            if registeredEmpl != False:
+                with st.form("form_ocorrencias", clear_on_submit=False):
+                        days = st.number_input("Quantos dias afastados? ", key="dias",min_value=0,max_value=15,step=1)
+                        injury = st.radio("Houve Lesão?", ['Sim', 'Não'])
+                        type = st.radio("Tipo de acidente", ['Acidente', 'Incidente', 'Quase Acidente'])
+                        date = st.date_input("Digite a data da ocorrência:")
+                        submit = st.button("teste")
+                        form = st.form_submit_button("Enviar")
+                        if submit:
+                            st.success("Teste")
+                            self.funcionario.update({
+                                "Dias afastados:":days,
+                                "Lesão: ":injury,
+                                "Tipo: ": type,
+                                "Data: ": date,
+                            })
+        st.write(self.funcionario)   
     """def salvarOcorrencias(self, funcionario):
         df_new = pd.DataFrame([funcionario])
         aba = "Ocorrências"

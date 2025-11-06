@@ -1,5 +1,5 @@
 import streamlit as st
-from funcionariosSt import Funcionarios
+from funcionarios import Funcionarios
 from ocorrencias import Ocorrencias
 
 
