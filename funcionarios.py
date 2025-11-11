@@ -4,8 +4,7 @@ import os
 from openpyxl import load_workbook
 import streamlit as st
 
-
-#classe Funcionárias
+#classe funcionários
 class Funcionarios():
     """Classe responsável pelo cadastro dos funcionários e criação do arquivo principal. """
 
@@ -13,25 +12,25 @@ class Funcionarios():
     def __init__(self):
         self.pathArquivo = "funcionarios.xlsx"
         
-    #função que gera o funcionário apartir do seu nome e cargo, salva-o em um dicionário e chama a função salvarFuncionário
+    #função que gera o funcionário apartir do seu nome e cargo, salva-o em um dicionário
     def Gerador_funcionarios(self):        
-    # 🔹 Formulário isolado
-        with st.form("form_funcionario", clear_on_submit=True):
-            nome = st.text_input("Digite seu nome:", key="nome_input")
+    #formulário para input de nome e cargo do funcionário
+        with st.form("form_funcionario"):
+            name = st.text_input("Digite seu nome:", key="nome_input")
             cargo = st.text_input("Digite seu cargo:", key="cargo_input")
             enviar = st.form_submit_button("Cadastrar")
 
-        # 🔹 O código aqui só roda quando o botão é clicado
+        #após envio, verifica se o nome e cargo foram preenchidos e chama a função passando os inputs
         if enviar:
-            if not nome or not cargo:
+            if not name or not cargo:
                 st.warning("⚠️ Preencha todos os campos antes de salvar.")
             else:
-                funcionario = [{"nome": nome, "cargo": cargo}]
+                funcionario = [{"nome": name, "cargo": cargo}]
                 self.salvarFuncionarios(funcionario)
-                st.success(f"✅ Funcionário {nome} ({cargo}) cadastrado com sucesso!")
-                
+                st.success(f"✅ Funcionário {name} ({cargo}) cadastrado com sucesso!")
+
+    #função responsável por salvar os funcionários cadastrados em uma aba especifica da planilha.          
     def salvarFuncionarios(self, funcionario):
-       
         df_new = pd.DataFrame(funcionario)
         aba = "Funcionários"
         if not os.path.exists(self.pathArquivo):

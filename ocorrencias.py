@@ -1,88 +1,87 @@
-#importando bibliotecas e frameworks
 import pandas as pd 
 import os
 from openpyxl import load_workbook
 import streamlit as st
 
-class Ocorrencias():
-    """Classe responsável pelo registro de ocorrências e da criação de outra aba no arquivo principal"""
-
-    #função de inicio da classe
+#classe responsável pelo cadastro de ocorrencias
+class Ocorrencias:
     def __init__(self):
         self.pathArquivo = "funcionarios.xlsx"
-        self.funcionario = {}
-        
+        self.ocorrencia = {}
 
-    #função responsável por achar um funcionárieo já cadastrado e retornar o seu cargo.
-    def acharFuncionario(self, nome):
-        #condicional que checa se o arquivo existe
+    #função que verifica se o funcionário está ou não cadastrado
+    def acharFuncionario(self):
         if not os.path.exists(self.pathArquivo):
             st.warning("Arquivo de funcionários não encontrado.")
-        
-        #guarda o arquivo na variavel
-        df = pd.read_excel(self.pathArquivo)
-        encontrado = df[df["nome"] == nome]
-
-        #caso o arquivo exista:
-        if not encontrado.empty:
-            funcionario = encontrado.iloc[0]  
-            st.success("Funcionário encontrado!")
-            st.success(f"Nome: {funcionario['nome']} \nCargo: {funcionario['cargo']}")
-            self.funcionario = {
-                "nome": funcionario["nome"],
-                "cargo": funcionario["cargo"]
-            } 
-            return True
-        else:
-            st.warning("Funcionário inexistente, cadastre-o primeiro.")
             return False
+        
+        #input do nome
+        nome = st.text_input("Qual o nome do funcionário?", key="nome")
+        #busca do funcionário
+        if st.button("Buscar"):
+            df = pd.read_excel(self.pathArquivo)
+            encontrado = df[df["nome"] == nome]
+            #retorna true ou false se o funcionário existe e armazena seu cargo e nome em um dicionário 
+            if not encontrado.empty:
+                funcionario = encontrado.iloc[0]
+                st.success("Funcionário encontrado!")
+                st.success(f"Nome: {funcionario['nome']} \nCargo: {funcionario['cargo']}")
+                st.session_state.funcionario_encontrado = {
+                    "nome": funcionario["nome"],
+                    "cargo": funcionario["cargo"]
+                }
+                return True
+            else:
+                st.warning("Funcionário inexistente, cadastre-o primeiro.")
+                return False
 
-    #cadastra as ocorrências
-    def calculosOcorrencia(self):
-        name = st.text_input("Qual o nome do funcionário?", key="nome")
-        button = st.button("Buscar")
-        if button:
-            registeredEmpl = self.acharFuncionario(name)
-            if registeredEmpl != False:
-                with st.form("form_ocorrencias", clear_on_submit=False):
-                        days = st.number_input("Quantos dias afastados? ", key="dias",min_value=0,max_value=15,step=1)
-                        injury = st.radio("Houve Lesão?", ['Sim', 'Não'])
-                        type = st.radio("Tipo de acidente", ['Acidente', 'Incidente', 'Quase Acidente'])
-                        date = st.date_input("Digite a data da ocorrência:")
-                        submit = st.button("teste")
-                        form = st.form_submit_button("Enviar")
-                        if submit:
-                            st.success("Teste")
-                            self.funcionario.update({
-                                "Dias afastados:":days,
-                                "Lesão: ":injury,
-                                "Tipo: ": type,
-                                "Data: ": date,
-                            })
-        st.write(self.funcionario)   
-    """def salvarOcorrencias(self, funcionario):
+        #se já encontrou antes, mantém
+        if "funcionario_encontrado" in st.session_state:
+            return True
+        return False
+
+    #recebe e registra a ocorrência em um dicionário
+    def registrarOcorrencia(self):
+        #chama a função para achar o funcionário
+        if self.acharFuncionario():
+            funcionario = st.session_state.get("funcionario_encontrado", {})
+            st.info(f"Registrando ocorrência para: **{funcionario.get('nome', '')}**")
+
+            #formulário de cadastro
+            with st.form("form_ocorrencias"):
+                days = st.number_input("Quantos dias afastados?", min_value=0, max_value=15, step=1)
+                injury = st.radio("Houve Lesão?", ['Sim', 'Não'])
+                tipo = st.radio("Tipo de acidente", ['Acidente', 'Incidente', 'Quase Acidente'])
+                date = st.date_input("Digite a data da ocorrência:")
+                submit = st.form_submit_button("Enviar")
+
+            #envio de inputs para o dicionário
+            if submit:
+                self.ocorrencia = {
+                    **funcionario,
+                    "Dias afastados": days,
+                    "Lesão": injury,
+                    "Tipo": tipo,
+                    "Data": str(date),
+                }
+                #chamada de função para salvar ocorrencia
+                self.salvarOcorrencias(self.ocorrencia)
+                st.success(f"✅ Ocorrência de {funcionario['nome']} cadastrada com sucesso!")
+
+    #função que salvará a ocorrencia em uma aba diferente da planilha
+    def salvarOcorrencias(self, funcionario):
         df_new = pd.DataFrame([funcionario])
         aba = "Ocorrências"
-
         if not os.path.exists(self.pathArquivo):
-            # Arquivo não existe → criar e adicionar a aba
             with pd.ExcelWriter(self.pathArquivo, engine="openpyxl") as writer:
                 df_new.to_excel(writer, sheet_name=aba, index=False)
-            print("✅ Arquivo criado. Dados salvos com sucesso!")
-
+            st.success("✅ Arquivo criado. Dados salvos com sucesso!")
         else:
-            # Arquivo existe
             with pd.ExcelWriter(self.pathArquivo, mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
                 try:
-                    # Tenta ler a aba existente
                     df_existente = pd.read_excel(self.pathArquivo, sheet_name=aba)
                     df_atualizado = pd.concat([df_existente, df_new], ignore_index=True)
                 except ValueError:
-                    # Aba não existe → criar novo DataFrame
                     df_atualizado = df_new
-
-                # Salva/atualiza a aba
                 df_atualizado.to_excel(writer, sheet_name=aba, index=False)
-            print(f"✅ Registro adicionado à aba '{aba}' com sucesso!")
-
-"""
+            st.success(f"✅ Registro adicionado à aba '{aba}' com sucesso!")
